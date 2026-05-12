@@ -30,7 +30,7 @@ export const PASSWORD_RULES: readonly PasswordRule[] = [
   {
     id: 'special',
     label: 'At least one special character (!@#$…)',
-    test: (p) => /[^A-Za-z0-9]/.test(p),
+    test: (p) => /\p{P}|\p{S}/u.test(p),
   },
 ]
 

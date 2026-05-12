@@ -6,8 +6,7 @@ import type { User } from '@/types'
 
 interface AuthState {
   readonly user: User | null
-  readonly token: string | null
-  setAuth: (user: User, token: string) => void
+  setAuth: (user: User) => void
   clearAuth: () => void
   isAuthenticated: () => boolean
 }
@@ -17,18 +16,17 @@ export const useAuthStore = create<AuthState>()(
     persist(
       (set, get) => ({
         user: null,
-        token: null,
-        setAuth: (user, token) => {
-          document.cookie = `auth-token=${token}; path=/; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`
-          set({ user, token })
-        },
+        setAuth: (user) => set({ user }),
         clearAuth: () => {
-          document.cookie = 'auth-token=; path=/; Max-Age=0'
-          set({ user: null, token: null })
+          set({ user: null })
+          fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
         },
-        isAuthenticated: () => get().token !== null,
+        isAuthenticated: () => get().user !== null,
       }),
-      { name: 'auth-storage' },
+      {
+        name: 'auth-storage',
+        partialize: (state) => ({ user: state.user }),
+      },
     ),
     { name: 'AuthStore' },
   ),

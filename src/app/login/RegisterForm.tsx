@@ -13,7 +13,6 @@ import { PasswordStrength } from '@/components/PasswordStrength'
 import type { User } from '@/types'
 
 interface RegisterResponse {
-  readonly token: string
   readonly user: User
 }
 
@@ -63,8 +62,8 @@ export function RegisterForm() {
     }
 
     try {
-      const { user, token } = await api.post<RegisterResponse>('/auth/merchant/register', payload)
-      setAuth(user, token)
+      const { user } = await api.post<RegisterResponse>('/auth/merchant/register', payload)
+      setAuth(user)
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')

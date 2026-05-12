@@ -12,7 +12,6 @@ import type { User } from '@/types'
 
 interface LoginResponse {
   readonly user: User
-  readonly token: string
 }
 
 export function LoginForm() {
@@ -35,8 +34,8 @@ export function LoginForm() {
     setLoading(true)
 
     try {
-      const { user, token } = await api.post<LoginResponse>('/auth/merchant/login', { email: email.trim(), password })
-      setAuth(user, token)
+      const { user } = await api.post<LoginResponse>('/auth/merchant/login', { email: email.trim(), password })
+      setAuth(user)
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.')

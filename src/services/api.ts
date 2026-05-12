@@ -1,4 +1,5 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+const REQUEST_TIMEOUT_MS = 30_000
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
@@ -10,25 +11,40 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(fetchOptions.headers as Record<string, string>),
+    ...Object.fromEntries(new Headers(fetchOptions.headers).entries()),
   }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...fetchOptions,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+
+  let res: Response
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...fetchOptions,
+      signal: fetchOptions.signal ?? controller.signal,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS}ms`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: res.statusText }))
     throw new Error((error as { message?: string }).message ?? res.statusText)
   }
 
-  return res.json() as Promise<T>
+  const text = await res.text()
+  return (text.length === 0 ? null : JSON.parse(text)) as T
 }
 
 export const api = {

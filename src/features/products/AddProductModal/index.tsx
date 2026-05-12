@@ -106,9 +106,10 @@ export function AddProductModal() {
     setForm(INITIAL_STATE)
   }
 
-  const handleSubmit = (publishStatus: 'draft' | 'active') => {
+  const handleSubmit = (publishStatus?: ProductFormState['status']) => {
+    const effectiveStatus = publishStatus ?? form.status
     // TODO: wire to products API
-    console.log({ ...form, status: publishStatus })
+    console.log({ ...form, status: effectiveStatus })
     handleClose()
   }
 

@@ -18,8 +18,14 @@ export const useAuthStore = create<AuthState>()(
       (set, get) => ({
         user: null,
         token: null,
-        setAuth: (user, token) => set({ user, token }),
-        clearAuth: () => set({ user: null, token: null }),
+        setAuth: (user, token) => {
+          document.cookie = `auth-token=${token}; path=/; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`
+          set({ user, token })
+        },
+        clearAuth: () => {
+          document.cookie = 'auth-token=; path=/; Max-Age=0'
+          set({ user: null, token: null })
+        },
         isAuthenticated: () => get().token !== null,
       }),
       { name: 'auth-storage' },

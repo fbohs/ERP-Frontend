@@ -24,6 +24,11 @@
   --input: #e5e5e5;
   --ring: #007a6b;
   --radius: 0.5rem;
+  --chart-1: #007a6b;
+  --chart-2: #3b82f6;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
 }
 
 .dark {
@@ -46,6 +51,11 @@
   --border: #1f1f1f;
   --input: #1f1f1f;
   --ring: #00ffd5;
+  --chart-1: #00ffd5;
+  --chart-2: #ff2bd6;
+  --chart-3: #a78bfa;
+  --chart-4: #38bdf8;
+  --chart-5: #fb923c;
 }
 
 @theme inline {
@@ -72,6 +82,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
+  --radius-4xl: calc(var(--radius) + 24px);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 }
 
 body {

@@ -2,7 +2,7 @@ export interface User {
   readonly id: string
   readonly name: string
   readonly email: string
-  readonly role: 'admin' | 'manager' | 'viewer'
+  readonly role: 'MERCHANT' | 'ADMIN' | 'MANAGER' | 'VIEWER'
   readonly avatarUrl?: string
 }
 

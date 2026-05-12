@@ -7,7 +7,7 @@ interface CartItem {
   readonly productId: string
   readonly name: string
   readonly price: number
-  quantity: number
+  readonly quantity: number
 }
 
 interface CartState {

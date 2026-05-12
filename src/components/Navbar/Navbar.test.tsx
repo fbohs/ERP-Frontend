@@ -6,7 +6,7 @@ const mockUser: User = {
   id: '1',
   name: 'Alex Kim',
   email: 'alex@example.com',
-  role: 'admin',
+  role: 'ADMIN',
   avatarUrl: '',
 }
 

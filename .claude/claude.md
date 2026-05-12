@@ -229,6 +229,7 @@ src/
 
 - Prefer **server-side fetching in Server Components** with `fetch()` and Next.js cache directives (`{ next: { revalidate: 60 } }`, `{ cache: 'no-store' }`).
 - Use **route handlers** under `src/app/api/.../route.ts` for endpoints owned by the frontend.
+- Server-side request interception (auth guards, redirects, rewrites) belongs in `src/proxy.ts` — export a function named `proxy`. **Do not create `middleware.ts`**; it is deprecated as of Next.js 16 and renamed to `proxy.ts`.
 - For client-side mutations, call route handlers; do not duplicate fetch logic in client components.
 
 ## Build & Test

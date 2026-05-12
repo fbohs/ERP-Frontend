@@ -1,0 +1,21 @@
+{
+    "mcpServers": {
+        "docs-langchain": {
+            "serverUrl": "https://docs.langchain.com/mcp"
+        },
+        "next-devtools": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "next-devtools-mcp@latest"
+            ]
+        },
+        "shadcn": {
+            "command": "npx",
+            "args": [
+                "shadcn@latest",
+                "mcp"
+            ]
+        }
+    }
+}

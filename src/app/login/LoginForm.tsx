@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { api } from '@/services/api'
+import { validateEmail } from '@/utils/validation'
 import type { User } from '@/types'
 
 interface LoginResponse {
@@ -22,13 +23,19 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  function validate(): string | null {
+    return validateEmail(email) ?? (!password ? 'Password is required.' : null)
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const validationError = validate()
+    if (validationError) { setError(validationError); return }
     setError(null)
     setLoading(true)
 
     try {
-      const { user, token } = await api.post<LoginResponse>('/auth/merchant/login', { email, password })
+      const { user, token } = await api.post<LoginResponse>('/auth/merchant/login', { email: email.trim(), password })
       setAuth(user, token)
       router.push('/dashboard')
     } catch (err) {

@@ -1,6 +1,4 @@
-import { Plus } from 'lucide-react'
 import { DashboardHeader } from '@/components/DashboardHeader'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -12,6 +10,7 @@ import {
 } from '@/components/ui/table'
 import { formatCurrency } from '@/utils/format'
 import type { Product } from '@/types'
+import { AddProductModal } from '@/features/products/AddProductModal'
 
 export const metadata = { title: 'Products — ERP' }
 
@@ -60,12 +59,7 @@ export default function ProductsPage() {
       <DashboardHeader
         title="Products"
         description="Manage your product catalogue."
-        actions={
-          <Button size="sm">
-            <Plus className="mr-1 h-4 w-4" />
-            Add product
-          </Button>
-        }
+        actions={<AddProductModal />}
       />
 
       <div className="rounded-lg border bg-card">

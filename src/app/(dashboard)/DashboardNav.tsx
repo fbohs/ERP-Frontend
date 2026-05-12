@@ -9,9 +9,14 @@ export function DashboardNav() {
   const user = useAuthStore((s) => s.user)
   const clearAuth = useAuthStore((s) => s.clearAuth)
 
-  function handleLogout() {
-    clearAuth()
-    router.push('/login')
+  async function handleLogout() {
+    try {
+      await clearAuth()
+    } catch {
+      // Server-side session cleanup failed; local state is already cleared.
+    } finally {
+      router.push('/login')
+    }
   }
 
   return <Navbar user={user} onLogout={handleLogout} />

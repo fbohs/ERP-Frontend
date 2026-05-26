@@ -27,12 +27,18 @@ export const useAuthStore = create<AuthState>()(
         token: null,
         loginAt: null,
 
-        setAuth: (user, token, tenant) =>
-          set({ user, token, tenant, loginAt: Date.now() }),
+        setAuth: (user, token, tenant) => {
+          set({ user, token, tenant, loginAt: Date.now() })
+          // Write a same-site cookie so proxy.ts can detect the session on
+          // server-side navigation. Not httpOnly (set from JS) — the real
+          // token is the authoritative copy in Zustand/localStorage.
+          document.cookie = `auth-token=${token}; path=/; SameSite=Strict`
+        },
 
         clearAuth: async () => {
           const { token } = get()
           set({ user: null, token: null, tenant: null, loginAt: null })
+          document.cookie = 'auth-token=; path=/; max-age=0'
           if (token) {
             await api.delete('/api/auth/logout', { token }).catch(() => {
               // Already cleared locally — server-side failure is non-fatal.
@@ -49,6 +55,7 @@ export const useAuthStore = create<AuthState>()(
           // receives a 401 triggers the same logout path.
           setUnauthorizedHandler(() => {
             set({ user: null, token: null, tenant: null, loginAt: null })
+            document.cookie = 'auth-token=; path=/; max-age=0'
             window.location.replace('/login')
           })
         },

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const TENANT_PUBLIC_PATHS = ['/login']
+const TENANT_PUBLIC_PATHS = ['/login', '/setup-password', '/forgot-password', '/reset-password']
 const PLATFORM_PUBLIC_PATHS = ['/platform/login', '/platform/verify']
 
 export function proxy(request: NextRequest) {

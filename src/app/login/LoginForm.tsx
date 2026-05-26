@@ -1,44 +1,54 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/stores/useAuthStore'
-import { api } from '@/services/api'
-import { validateEmail } from '@/utils/validation'
-import type { User } from '@/types'
-
-interface LoginResponse {
-  readonly user: User
-}
+import { api, ApiError } from '@/services/api'
+import type { LoginResponse } from '@/types'
 
 export function LoginForm() {
   const router = useRouter()
   const setAuth = useAuthStore((s) => s.setAuth)
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  function validate(): string | null {
-    return validateEmail(email) ?? (!password ? 'Password is required.' : null)
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const validationError = validate()
-    if (validationError) { setError(validationError); return }
     setError(null)
     setLoading(true)
 
     try {
-      const { user } = await api.post<LoginResponse>('/auth/merchant/login', { email: email.trim(), password })
-      setAuth(user)
+      const data = await api.post<LoginResponse>('/api/auth/login', {
+        email: email.trim(),
+        password,
+      })
+
+      if (data.requiresPasswordChange) {
+        // setupToken must not touch localStorage — pass it only in the URL.
+        router.push(`/setup-password?token=${encodeURIComponent(data.setupToken)}`)
+        return
+      }
+
+      setAuth(data.user, data.token, data.tenant)
       router.push('/dashboard')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.')
+      if (err instanceof ApiError) {
+        if (err.code === 'VALIDATION_ERROR') {
+          setError('Please enter a valid email address and password.')
+        } else {
+          // 401 UNAUTHORIZED — do not reveal which field is wrong.
+          setError('Invalid email or password.')
+        }
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -60,7 +70,15 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">Password</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">Password</Label>
+          <Link
+            href="/forgot-password"
+            className="text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <Input
           id="password"
           type="password"

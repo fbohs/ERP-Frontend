@@ -6,6 +6,13 @@ export interface User {
   readonly avatarUrl?: string
 }
 
+export interface PlatformAdmin {
+  readonly publicId: string
+  readonly email: string
+  readonly name: string
+  readonly isActive: boolean
+}
+
 export interface Product {
   readonly id: string
   readonly name: string

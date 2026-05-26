@@ -2,7 +2,7 @@ import 'server-only'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PLATFORM_API = process.env.PLATFORM_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? ''
+const BACKEND = process.env.BACKEND_URL ?? ''
 const COOKIE_NAME = 'platform-auth-token'
 const COOKIE_MAX_AGE = 60 * 60 * 15 // 15 minutes — matches backend token TTL
 
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   let res: Response
   try {
-    res = await fetch(`${PLATFORM_API}/platform/auth/verify`, {
+    res = await fetch(`${BACKEND}/platform/auth/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   // Fetch admin details with the fresh token so the client can populate Zustand immediately
   let admin: unknown = null
   try {
-    const meRes = await fetch(`${PLATFORM_API}/platform/auth/me`, {
+    const meRes = await fetch(`${BACKEND}/platform/auth/me`, {
       headers: { Authorization: `Bearer ${data.token}` },
     })
     if (meRes.ok) admin = await meRes.json()

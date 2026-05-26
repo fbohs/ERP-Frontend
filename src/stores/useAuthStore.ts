@@ -2,14 +2,19 @@
 
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import type { User } from '@/types'
+import { api, setUnauthorizedHandler } from '@/services/api'
+import type { User, AuthTenant } from '@/types'
+
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000
 
 interface AuthState {
   readonly user: User | null
-  readonly serverValidated: boolean
-  setAuth: (user: User) => void
+  readonly tenant: AuthTenant | null
+  readonly token: string | null
+  readonly loginAt: number | null
+  setAuth: (user: User, token: string, tenant: AuthTenant) => void
   clearAuth: () => Promise<void>
-  validateSession: () => Promise<void>
+  rehydrate: () => void
   isAuthenticated: () => boolean
 }
 
@@ -18,38 +23,50 @@ export const useAuthStore = create<AuthState>()(
     persist(
       (set, get) => ({
         user: null,
-        serverValidated: false,
-        setAuth: (user) => set({ user, serverValidated: true }),
+        tenant: null,
+        token: null,
+        loginAt: null,
+
+        setAuth: (user, token, tenant) =>
+          set({ user, token, tenant, loginAt: Date.now() }),
+
         clearAuth: async () => {
-          // Clear local state first so the client is always logged out, even if
-          // the server request fails. The thrown error lets callers observe failure.
-          set({ user: null, serverValidated: false })
-          const res = await fetch('/api/auth/logout', { method: 'POST' })
-          if (!res.ok) throw new Error(`Logout failed: ${res.statusText}`)
-        },
-        validateSession: async () => {
-          try {
-            const res = await fetch('/api/auth/me')
-            if (res.ok) {
-              const user = (await res.json()) as User
-              set({ user, serverValidated: true })
-            } else {
-              set({ user: null, serverValidated: false })
-            }
-          } catch {
-            set({ serverValidated: false })
+          const { token } = get()
+          set({ user: null, token: null, tenant: null, loginAt: null })
+          if (token) {
+            await api.delete('/api/auth/logout', { token }).catch(() => {
+              // Already cleared locally — server-side failure is non-fatal.
+            })
           }
         },
+
+        rehydrate: () => {
+          const { loginAt } = get()
+          if (loginAt !== null && Date.now() - loginAt > SESSION_TTL_MS) {
+            set({ user: null, token: null, tenant: null, loginAt: null })
+          }
+          // Register global 401 handler so any authenticated api call that
+          // receives a 401 triggers the same logout path.
+          setUnauthorizedHandler(() => {
+            set({ user: null, token: null, tenant: null, loginAt: null })
+            window.location.replace('/login')
+          })
+        },
+
         isAuthenticated: () => {
-          const { user, serverValidated } = get()
-          return user !== null && serverValidated
+          const { token, loginAt } = get()
+          if (!token || loginAt === null) return false
+          return Date.now() - loginAt <= SESSION_TTL_MS
         },
       }),
       {
         name: 'auth-storage',
-        // serverValidated is intentionally excluded — it must be re-earned from
-        // the server on every hydration via validateSession().
-        partialize: (state) => ({ user: state.user }),
+        partialize: (state) => ({
+          user: state.user,
+          token: state.token,
+          tenant: state.tenant,
+          loginAt: state.loginAt,
+        }),
       },
     ),
     { name: 'AuthStore' },

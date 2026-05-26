@@ -1,5 +1,24 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+import type { AuthErrorCode } from '@/types'
+
 const REQUEST_TIMEOUT_MS = 30_000
+
+export class ApiError extends Error {
+  constructor(
+    readonly code: AuthErrorCode,
+    readonly status: number,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+// Registered by the auth store on mount. Called on any 401 from an
+// authenticated request (one that sent an Authorization header).
+let unauthorizedHandler: (() => void) | null = null
+export function setUnauthorizedHandler(fn: () => void) {
+  unauthorizedHandler = fn
+}
 
 interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown
@@ -23,7 +42,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   let res: Response
   try {
-    res = await fetch(`${BASE_URL}${path}`, {
+    res = await fetch(path, {
       ...fetchOptions,
       signal: fetchOptions.signal ?? controller.signal,
       headers,
@@ -39,8 +58,15 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: res.statusText }))
-    throw new Error((error as { message?: string }).message ?? res.statusText)
+    const envelope = await res.json().catch(() => null) as { error?: { code?: string; message?: string } } | null
+    const code = (envelope?.error?.code ?? 'INTERNAL_ERROR') as AuthErrorCode
+    const message = envelope?.error?.message ?? res.statusText
+
+    if (res.status === 401 && token) {
+      unauthorizedHandler?.()
+    }
+
+    throw new ApiError(code, res.status, message)
   }
 
   const text = await res.text()

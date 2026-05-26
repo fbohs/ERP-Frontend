@@ -1,4 +1,17 @@
 {
+    "hooks": {
+        "UserPromptSubmit": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "prompt=$(jq -r '.prompt // \"\"'); if echo \"$prompt\" | grep -qiE '(add|write|record|save|log|capture|note).{0,30}(learning|lesson|insight|takeaway)'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"LEARNING CAPTURE ACTIVE: The user wants to add a learning to this project. Learnings live in the learnings/ folder (project root), organised by topic. Files: react.md, fetch-http.md, auth-security.md, nextjs-routing.md, state-management.md, typescript-config.md, platform-admin.md. README.md is the index. Steps: (1) Identify the right topic file — or create a new one if the topic does not fit any existing file and add it to README.md. (2) Append a new entry to that file using the established format in that file. (3) Save a project-type memory entry in ~/.claude/projects/.../memory/ summarising the learning in 2-3 sentences for future sessions.\"}}'; fi",
+                        "timeout": 5
+                    }
+                ]
+            }
+        ]
+    },
     "mcpServers": {
         "docs-langchain": {
             "serverUrl": "https://docs.langchain.com/mcp"

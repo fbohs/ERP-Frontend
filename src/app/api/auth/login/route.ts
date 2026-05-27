@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const BACKEND = process.env.BACKEND_URL ?? ''
 const COOKIE_NAME = 'auth-token'
+const ROLE_COOKIE_NAME = 'auth-role'
 const COOKIE_MAX_AGE = 8 * 60 * 60 // 8 hours
 
 export async function POST(req: NextRequest) {
@@ -27,15 +28,17 @@ export async function POST(req: NextRequest) {
 
   // Successful login — set httpOnly cookie, strip token from client response.
   const { token, ...clientData } = data as { token: string } & Record<string, unknown>
+  const role = (clientData as { user?: { role?: string } }).user?.role
 
   const response = NextResponse.json({ ...clientData, requiresPasswordChange: false })
-  response.cookies.set(COOKIE_NAME, token, {
-    httpOnly: true,
+  const cookieOpts = {
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'strict' as const,
     path: '/',
     maxAge: COOKIE_MAX_AGE,
-  })
+  }
+  response.cookies.set(COOKIE_NAME, token, { ...cookieOpts, httpOnly: true })
+  if (role) response.cookies.set(ROLE_COOKIE_NAME, role, cookieOpts)
 
   return response
 }

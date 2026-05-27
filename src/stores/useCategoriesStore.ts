@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { useAuthStore } from '@/stores/useAuthStore'
-import type { Category, CreateCategoryBody, ListCategoriesResponse, CategoryApiError } from '@/types'
+import type { Category, CreateCategoryBody, UpdateCategoryBody, ListCategoriesResponse, CategoryApiError, UserRole } from '@/types'
 
 interface CategoriesState {
   categories: Category[]
@@ -13,6 +13,8 @@ interface CategoriesState {
 
   fetchCategories: (signal?: AbortSignal) => Promise<void>
   createCategory: (body: CreateCategoryBody, idempotencyKey: string) => Promise<Category>
+  updateCategory: (id: string, body: UpdateCategoryBody, idempotencyKey: string) => Promise<Category>
+  deactivateCategory: (id: string, idempotencyKey: string, role: UserRole) => Promise<void>
 }
 
 export const useCategoriesStore = create<CategoriesState>()(
@@ -71,6 +73,56 @@ export const useCategoriesStore = create<CategoriesState>()(
         const created = data as Category
         set((s) => ({ categories: [...s.categories, created] }))
         return created
+      },
+
+      updateCategory: async (id, body, idempotencyKey) => {
+        const res = await fetch(`/api/categories/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(body),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          const err = data as CategoryApiError
+          throw Object.assign(new Error(err.error.message), { code: err.error.code })
+        }
+
+        const updated = data as Category
+        set((s) => ({
+          categories: s.categories.map((c) => (c.id === id ? updated : c)),
+        }))
+        return updated
+      },
+
+      deactivateCategory: async (id, idempotencyKey, role) => {
+        const res = await fetch(`/api/categories/${id}`, {
+          method: 'DELETE',
+          headers: { 'Idempotency-Key': idempotencyKey },
+        })
+
+        if (res.status === 204) {
+          if (role === 'ADMIN') {
+            set((s) => ({
+              categories: s.categories.map((c) =>
+                c.id === id ? { ...c, isActive: false } : c,
+              ),
+            }))
+          } else {
+            set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }))
+          }
+          return
+        }
+
+        const data = await res.json() as CategoryApiError
+        if (res.status === 404) {
+          // Gone server-side — remove from local list before throwing
+          set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }))
+        }
+        throw Object.assign(new Error(data.error.message), { code: data.error.code })
       },
     }),
     { name: 'CategoriesStore' },

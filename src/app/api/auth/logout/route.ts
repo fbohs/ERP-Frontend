@@ -2,18 +2,21 @@ import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 
 const BACKEND = process.env.BACKEND_URL ?? ''
+const COOKIE_NAME = 'auth-token'
 
 export async function DELETE(req: NextRequest) {
-  const authorization = req.headers.get('Authorization')
+  const token = req.cookies.get(COOKIE_NAME)?.value
 
-  await fetch(`${BACKEND}/auth/logout`, {
-    method: 'DELETE',
-    headers: {
-      ...(authorization ? { Authorization: authorization } : {}),
-    },
-  }).catch(() => {
-    // Best-effort — client has already cleared its local state before calling this.
-  })
+  if (token) {
+    await fetch(`${BACKEND}/auth/logout`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    }).catch(() => {
+      // Best-effort — cookie is cleared regardless.
+    })
+  }
 
-  return new NextResponse(null, { status: 204 })
+  const response = new NextResponse(null, { status: 204 })
+  response.cookies.delete(COOKIE_NAME)
+  return response
 }

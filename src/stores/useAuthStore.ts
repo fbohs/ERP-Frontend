@@ -2,19 +2,18 @@
 
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import { api, setUnauthorizedHandler } from '@/services/api'
+import { setUnauthorizedHandler } from '@/services/api'
 import type { User, AuthTenant } from '@/types'
-
-const SESSION_TTL_MS = 8 * 60 * 60 * 1000
 
 interface AuthState {
   readonly user: User | null
   readonly tenant: AuthTenant | null
-  readonly token: string | null
-  readonly loginAt: number | null
-  setAuth: (user: User, token: string, tenant: AuthTenant) => void
+  // Held in memory only (not persisted). Passed from login → setup-password page.
+  readonly pendingSetupToken: string | null
+
+  setAuth: (user: User, tenant: AuthTenant) => void
+  setPendingSetupToken: (token: string | null) => void
   clearAuth: () => Promise<void>
-  rehydrate: () => void
   isAuthenticated: () => boolean
 }
 
@@ -24,58 +23,43 @@ export const useAuthStore = create<AuthState>()(
       (set, get) => ({
         user: null,
         tenant: null,
-        token: null,
-        loginAt: null,
+        pendingSetupToken: null,
 
-        setAuth: (user, token, tenant) => {
-          set({ user, token, tenant, loginAt: Date.now() })
-          // Write a same-site cookie so proxy.ts can detect the session on
-          // server-side navigation. Not httpOnly (set from JS) — the real
-          // token is the authoritative copy in Zustand/localStorage.
-          document.cookie = `auth-token=${token}; path=/; SameSite=Strict`
+        setAuth: (user, tenant) => {
+          set({ user, tenant })
+        },
+
+        setPendingSetupToken: (token) => {
+          set({ pendingSetupToken: token })
         },
 
         clearAuth: async () => {
-          const { token } = get()
-          set({ user: null, token: null, tenant: null, loginAt: null })
-          document.cookie = 'auth-token=; path=/; max-age=0'
-          if (token) {
-            await api.delete('/api/auth/logout', { token }).catch(() => {
-              // Already cleared locally — server-side failure is non-fatal.
-            })
-          }
-        },
-
-        rehydrate: () => {
-          const { loginAt } = get()
-          if (loginAt !== null && Date.now() - loginAt > SESSION_TTL_MS) {
-            set({ user: null, token: null, tenant: null, loginAt: null })
-          }
-          // Register global 401 handler so any authenticated api call that
-          // receives a 401 triggers the same logout path.
-          setUnauthorizedHandler(() => {
-            set({ user: null, token: null, tenant: null, loginAt: null })
-            document.cookie = 'auth-token=; path=/; max-age=0'
-            window.location.replace('/login')
+          set({ user: null, tenant: null })
+          await fetch('/api/auth/logout', { method: 'DELETE' }).catch(() => {
+            // Best-effort — local state already cleared.
           })
         },
 
-        isAuthenticated: () => {
-          const { token, loginAt } = get()
-          if (!token || loginAt === null) return false
-          return Date.now() - loginAt <= SESSION_TTL_MS
-        },
+        isAuthenticated: () => get().user !== null,
       }),
       {
         name: 'auth-storage',
         partialize: (state) => ({
           user: state.user,
-          token: state.token,
           tenant: state.tenant,
-          loginAt: state.loginAt,
         }),
       },
     ),
     { name: 'AuthStore' },
   ),
 )
+
+// Wired up by AuthBootstrap on mount so any API 401 (outside auth routes)
+// triggers a full logout and redirect.
+export function bootstrapUnauthorizedHandler() {
+  setUnauthorizedHandler(async () => {
+    useAuthStore.setState({ user: null, tenant: null })
+    await fetch('/api/auth/logout', { method: 'DELETE' }).catch(() => {})
+    window.location.replace('/login')
+  })
+}

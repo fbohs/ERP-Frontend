@@ -10,10 +10,11 @@ import { api } from '@/services/api'
 import { validateEmail, validateName, validatePhone } from '@/utils/validation'
 import { validatePassword } from '@/utils/password'
 import { PasswordStrength } from '@/components/PasswordStrength'
-import type { User } from '@/types'
+import type { User, AuthTenant } from '@/types'
 
 interface RegisterResponse {
   readonly user: User
+  readonly tenant: AuthTenant
 }
 
 interface RegisterPayload {
@@ -62,8 +63,8 @@ export function RegisterForm() {
     }
 
     try {
-      const { user } = await api.post<RegisterResponse>('/auth/merchant/register', payload)
-      setAuth(user)
+      const { user, tenant } = await api.post<RegisterResponse>('/auth/merchant/register', payload)
+      setAuth(user, tenant)
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.')

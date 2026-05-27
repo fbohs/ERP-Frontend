@@ -6,7 +6,7 @@ import type { PlatformAdmin } from '@/types'
 
 interface PlatformAuthState {
   readonly platformAdmin: PlatformAdmin | null
-  readonly serverValidated: boolean
+  serverValidated: boolean
   setAuth: (admin: PlatformAdmin) => void
   clearAuth: () => Promise<void>
   validateSession: () => Promise<void>

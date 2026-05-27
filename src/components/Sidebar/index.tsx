@@ -3,11 +3,23 @@
 import { SidebarLink } from './SidebarLink'
 import { SidebarHeader } from './SidebarHeader'
 import { NAV_GROUPS } from '@/constants/navigation'
+import { useAuthStore } from '@/stores/useAuthStore'
 
 export function Sidebar() {
+  const role = useAuthStore((s) => s.user?.role)
+
+  const visibleGroups = NAV_GROUPS
+    .map((group) => ({
+      ...group,
+      links: group.links.filter(
+        (link) => !link.roles || (role !== undefined && link.roles.includes(role)),
+      ),
+    }))
+    .filter((group) => group.links.length > 0)
+
   return (
     <aside className="flex w-60 shrink-0 flex-col gap-1 border-r bg-background px-3 py-4">
-      {NAV_GROUPS.map((group) => (
+      {visibleGroups.map((group) => (
         <div key={group.label} className="mb-4">
           <SidebarHeader label={group.label} />
           <nav className="flex flex-col gap-0.5">

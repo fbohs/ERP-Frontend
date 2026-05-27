@@ -2,14 +2,18 @@
 
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import type { User } from '@/types'
+import { setUnauthorizedHandler } from '@/services/api'
+import type { User, AuthTenant } from '@/types'
 
 interface AuthState {
   readonly user: User | null
-  readonly serverValidated: boolean
-  setAuth: (user: User) => void
+  readonly tenant: AuthTenant | null
+  // Held in memory only (not persisted). Passed from login → setup-password page.
+  readonly pendingSetupToken: string | null
+
+  setAuth: (user: User, tenant: AuthTenant) => void
+  setPendingSetupToken: (token: string | null) => void
   clearAuth: () => Promise<void>
-  validateSession: () => Promise<void>
   isAuthenticated: () => boolean
 }
 
@@ -18,40 +22,44 @@ export const useAuthStore = create<AuthState>()(
     persist(
       (set, get) => ({
         user: null,
-        serverValidated: false,
-        setAuth: (user) => set({ user, serverValidated: true }),
+        tenant: null,
+        pendingSetupToken: null,
+
+        setAuth: (user, tenant) => {
+          set({ user, tenant })
+        },
+
+        setPendingSetupToken: (token) => {
+          set({ pendingSetupToken: token })
+        },
+
         clearAuth: async () => {
-          // Clear local state first so the client is always logged out, even if
-          // the server request fails. The thrown error lets callers observe failure.
-          set({ user: null, serverValidated: false })
-          const res = await fetch('/api/auth/logout', { method: 'POST' })
-          if (!res.ok) throw new Error(`Logout failed: ${res.statusText}`)
+          set({ user: null, tenant: null })
+          await fetch('/api/auth/logout', { method: 'DELETE' }).catch(() => {
+            // Best-effort — local state already cleared.
+          })
         },
-        validateSession: async () => {
-          try {
-            const res = await fetch('/api/auth/me')
-            if (res.ok) {
-              const user = (await res.json()) as User
-              set({ user, serverValidated: true })
-            } else {
-              set({ user: null, serverValidated: false })
-            }
-          } catch {
-            set({ serverValidated: false })
-          }
-        },
-        isAuthenticated: () => {
-          const { user, serverValidated } = get()
-          return user !== null && serverValidated
-        },
+
+        isAuthenticated: () => get().user !== null,
       }),
       {
         name: 'auth-storage',
-        // serverValidated is intentionally excluded — it must be re-earned from
-        // the server on every hydration via validateSession().
-        partialize: (state) => ({ user: state.user }),
+        partialize: (state) => ({
+          user: state.user,
+          tenant: state.tenant,
+        }),
       },
     ),
     { name: 'AuthStore' },
   ),
 )
+
+// Wired up by AuthBootstrap on mount so any API 401 (outside auth routes)
+// triggers a full logout and redirect.
+export function bootstrapUnauthorizedHandler() {
+  setUnauthorizedHandler(async () => {
+    useAuthStore.setState({ user: null, tenant: null })
+    await fetch('/api/auth/logout', { method: 'DELETE' }).catch(() => {})
+    window.location.replace('/login')
+  })
+}

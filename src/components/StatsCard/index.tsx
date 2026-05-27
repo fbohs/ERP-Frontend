@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { LucideIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -8,11 +9,12 @@ interface StatsCardProps {
   readonly delta?: string
   readonly deltaPositive?: boolean
   readonly icon: LucideIcon
+  readonly href?: string
 }
 
-export function StatsCard({ title, value, delta, deltaPositive, icon: Icon }: StatsCardProps) {
-  return (
-    <Card>
+export function StatsCard({ title, value, delta, deltaPositive, icon: Icon, href }: StatsCardProps) {
+  const card = (
+    <Card className={cn(href && 'cursor-pointer transition-colors hover:border-primary/50 hover:bg-card/80')}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
@@ -32,4 +34,10 @@ export function StatsCard({ title, value, delta, deltaPositive, icon: Icon }: St
       </CardContent>
     </Card>
   )
+
+  if (href) {
+    return <Link href={href} className="block">{card}</Link>
+  }
+
+  return card
 }

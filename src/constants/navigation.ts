@@ -4,8 +4,8 @@ import {
   ShoppingCart,
   Users,
   BarChart3,
-  Settings,
   UserCog,
+  Layers,
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '@/types'
@@ -32,7 +32,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: 'Team',
     links: [
       {
-        label: 'Users',
+        label: 'Subordinates',
         href: '/users',
         icon: UserCog,
         roles: ['ADMIN'],
@@ -43,6 +43,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: 'Store',
     links: [
       { label: 'Products', href: '/products', icon: Package },
+      { label: 'Categories', href: '/categories', icon: Layers },
       {
         label: 'Orders',
         href: '/orders',
@@ -67,10 +68,6 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         roles: ['ADMIN', 'SALES_MANAGER', 'INVENTORY_MANAGER', 'PURCHASING_MANAGER', 'PRODUCT_VERIFIER', 'CONTENT_MANAGER', 'REPORT_VIEWER'],
       },
     ],
-  },
-  {
-    label: 'System',
-    links: [{ label: 'Settings', href: '/settings', icon: Settings }],
   },
 ]
 

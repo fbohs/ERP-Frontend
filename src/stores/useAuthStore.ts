@@ -10,6 +10,8 @@ interface AuthState {
   readonly tenant: AuthTenant | null
   // Held in memory only (not persisted). Passed from login → setup-password page.
   readonly pendingSetupToken: string | null
+  // True after Zustand has rehydrated from localStorage — safe to role-filter UI.
+  _hasHydrated: boolean
 
   setAuth: (user: User, tenant: AuthTenant) => void
   setPendingSetupToken: (token: string | null) => void
@@ -24,6 +26,7 @@ export const useAuthStore = create<AuthState>()(
         user: null,
         tenant: null,
         pendingSetupToken: null,
+        _hasHydrated: false,
 
         setAuth: (user, tenant) => {
           set({ user, tenant })
@@ -48,6 +51,11 @@ export const useAuthStore = create<AuthState>()(
           user: state.user,
           tenant: state.tenant,
         }),
+        onRehydrateStorage: () => (state) => {
+          if (state) {
+            state._hasHydrated = true
+          }
+        },
       },
     ),
     { name: 'AuthStore' },

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,19 +9,16 @@ import { PasswordStrength } from '@/components/PasswordStrength'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { api, ApiError } from '@/services/api'
 import { validatePassword } from '@/utils/password'
-import type { SetupPasswordResponse } from '@/types'
 
-// 15-min window starts when the user submitted login, not when this page loads.
 const SETUP_TTL_SECONDS = 15 * 60
-const WARN_AT_SECONDS = 2 * 60 // show warning when 2 min remain
+const WARN_AT_SECONDS = 2 * 60
 
 export function SetupPasswordForm() {
   const router = useRouter()
-  const params = useSearchParams()
-  const token = params.get('token') ?? ''
 
+  const pendingSetupToken = useAuthStore((s) => s.pendingSetupToken)
+  const setPendingSetupToken = useAuthStore((s) => s.setPendingSetupToken)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const setAuth = useAuthStore((s) => s.setAuth)
 
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -32,19 +29,15 @@ export function SetupPasswordForm() {
 
   const mountedAt = useRef(Date.now())
 
-  // Redirect away if no token or already authenticated.
   useEffect(() => {
-    if (!token) { router.replace('/login'); return }
+    if (!pendingSetupToken) { router.replace('/login'); return }
     if (isAuthenticated()) { router.replace('/dashboard'); return }
-  }, [token, isAuthenticated, router])
+  }, [pendingSetupToken, isAuthenticated, router])
 
-  // Countdown — drives the expiry warning only, does not enforce expiry
-  // (the backend is the authority on token validity).
   useEffect(() => {
     const id = setInterval(() => {
       const elapsed = Math.floor((Date.now() - mountedAt.current) / 1000)
-      const remaining = Math.max(0, SETUP_TTL_SECONDS - elapsed)
-      setSecondsLeft(remaining)
+      setSecondsLeft(Math.max(0, SETUP_TTL_SECONDS - elapsed))
     }, 1000)
     return () => clearInterval(id)
   }, [])
@@ -65,18 +58,16 @@ export function SetupPasswordForm() {
     setLoading(true)
 
     try {
-      const data = await api.post<SetupPasswordResponse>('/api/auth/setup-password', {
-        token,
+      await api.post('/api/auth/setup-password', {
+        token: pendingSetupToken,
         newPassword: password,
       })
 
-      // Token is now a full session token — bootstrap auth context and go.
-      setAuth(
-        { id: '', name: data.user.name, email: '', role: 'ADMIN', avatarUrl: undefined },
-        data.token,
-        data.tenant,
-      )
-      router.replace('/dashboard')
+      // Password is set and the session cookie is now live.
+      // Clear the setup token and send the user to login so they authenticate
+      // normally — the login response returns the full user + tenant object.
+      setPendingSetupToken(null)
+      router.replace('/login')
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setFormError(
@@ -134,7 +125,7 @@ export function SetupPasswordForm() {
       {formError && <p className="text-sm text-destructive">{formError}</p>}
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Activating…' : 'Set password & sign in'}
+        {loading ? 'Activating…' : 'Set password & continue'}
       </Button>
     </form>
   )

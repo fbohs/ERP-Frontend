@@ -13,6 +13,7 @@ import type { LoginResponse } from '@/types'
 export function LoginForm() {
   const router = useRouter()
   const setAuth = useAuthStore((s) => s.setAuth)
+  const setPendingSetupToken = useAuthStore((s) => s.setPendingSetupToken)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,19 +32,19 @@ export function LoginForm() {
       })
 
       if (data.requiresPasswordChange) {
-        // setupToken must not touch localStorage — pass it only in the URL.
-        router.push(`/setup-password?token=${encodeURIComponent(data.setupToken)}`)
+        // Keep setupToken in memory only — never in localStorage or the URL.
+        setPendingSetupToken(data.setupToken)
+        router.push('/setup-password')
         return
       }
 
-      setAuth(data.user, data.token, data.tenant)
+      setAuth(data.user, data.tenant)
       router.push('/dashboard')
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === 'VALIDATION_ERROR') {
           setError('Please enter a valid email address and password.')
         } else {
-          // 401 UNAUTHORIZED — do not reveal which field is wrong.
           setError('Invalid email or password.')
         }
       } else {

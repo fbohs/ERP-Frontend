@@ -30,7 +30,6 @@ const ROLE_STATS: Record<UserRole, readonly StatConfig[]> = {
   ],
   MERCHANT: [
     { title: 'Products', icon: Package, href: '/products', delta: 'Your catalogue', deltaPositive: true },
-    { title: 'Categories', icon: Layers, href: '/categories' },
   ],
   SALES_MANAGER: [
     { title: 'Orders', icon: ShoppingCart, href: '/orders' },
@@ -39,7 +38,6 @@ const ROLE_STATS: Record<UserRole, readonly StatConfig[]> = {
   ],
   INVENTORY_MANAGER: [
     { title: 'Products', icon: Package, href: '/products' },
-    { title: 'Categories', icon: Layers, href: '/categories' },
     { title: 'Reports', icon: BarChart3, href: '/reports' },
   ],
   PURCHASING_MANAGER: [
@@ -53,7 +51,6 @@ const ROLE_STATS: Record<UserRole, readonly StatConfig[]> = {
   ],
   CONTENT_MANAGER: [
     { title: 'Products', icon: Package, href: '/products' },
-    { title: 'Categories', icon: Layers, href: '/categories' },
     { title: 'Reports', icon: BarChart3, href: '/reports' },
   ],
   PRODUCT_VERIFIER: [
@@ -63,7 +60,6 @@ const ROLE_STATS: Record<UserRole, readonly StatConfig[]> = {
   REPORT_VIEWER: [
     { title: 'Reports', icon: BarChart3, href: '/reports' },
     { title: 'Products', icon: Package, href: '/products' },
-    { title: 'Categories', icon: Layers, href: '/categories' },
   ],
 }
 

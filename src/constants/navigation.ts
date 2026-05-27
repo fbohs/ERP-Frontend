@@ -43,7 +43,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
     label: 'Store',
     links: [
       { label: 'Products', href: '/products', icon: Package },
-      { label: 'Categories', href: '/categories', icon: Layers },
+      { label: 'Categories', href: '/categories', icon: Layers, roles: ['ADMIN'] as const },
       {
         label: 'Orders',
         href: '/orders',

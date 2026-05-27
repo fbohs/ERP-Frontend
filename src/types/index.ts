@@ -209,9 +209,18 @@ export interface ListCategoriesResponse {
   readonly categories: readonly Category[]
 }
 
+export interface CreateCategoryBody {
+  readonly name: string
+  readonly slug: string
+  readonly description: string | null
+  readonly parentId: string | null
+}
+
 export type CategoryErrorCode =
   | 'UNAUTHORIZED'
   | 'FORBIDDEN'
+  | 'CATEGORY_SLUG_EXISTS'
+  | 'VALIDATION_ERROR'
   | 'INTERNAL_ERROR'
 
 export interface CategoryApiError {

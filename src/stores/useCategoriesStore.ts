@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { useAuthStore } from '@/stores/useAuthStore'
-import type { Category, ListCategoriesResponse, CategoryApiError } from '@/types'
+import type { Category, CreateCategoryBody, ListCategoriesResponse, CategoryApiError } from '@/types'
 
 interface CategoriesState {
   categories: Category[]
@@ -12,6 +12,7 @@ interface CategoriesState {
   error: string | null
 
   fetchCategories: (signal?: AbortSignal) => Promise<void>
+  createCategory: (body: CreateCategoryBody, idempotencyKey: string) => Promise<Category>
 }
 
 export const useCategoriesStore = create<CategoriesState>()(
@@ -49,6 +50,27 @@ export const useCategoriesStore = create<CategoriesState>()(
           if (err instanceof DOMException && err.name === 'AbortError') return
           set({ error: 'Failed to load categories. Check your connection and try again.', loading: false })
         }
+      },
+
+      createCategory: async (body, idempotencyKey) => {
+        const res = await fetch('/api/categories', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Idempotency-Key': idempotencyKey,
+          },
+          body: JSON.stringify(body),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          const err = data as CategoryApiError
+          throw Object.assign(new Error(err.error.message), { code: err.error.code })
+        }
+
+        const created = data as Category
+        set((s) => ({ categories: [...s.categories, created] }))
+        return created
       },
     }),
     { name: 'CategoriesStore' },

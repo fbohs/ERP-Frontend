@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useCategoriesStore } from '@/stores/useCategoriesStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { cn } from '@/lib/utils'
 import type { Category } from '@/types'
 
@@ -36,6 +37,8 @@ function parentName(category: Category, index: Map<string, Category>): string {
 
 export function CategoriesTable() {
   const { categories, loading, error, fetchCategories } = useCategoriesStore()
+  const role = useAuthStore((s) => s.user?.role)
+  const isAdmin = role === 'ADMIN'
 
   const load = useCallback((signal?: AbortSignal) => {
     void fetchCategories(signal)
@@ -72,6 +75,8 @@ export function CategoriesTable() {
     )
   }
 
+  const colSpan = isAdmin ? 6 : 5
+
   return (
     <div className="rounded-lg border border-border">
       <Table>
@@ -81,7 +86,7 @@ export function CategoriesTable() {
             <TableHead>Slug</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Parent</TableHead>
-            <TableHead>Status</TableHead>
+            {isAdmin && <TableHead>Status</TableHead>}
             <TableHead>Created</TableHead>
           </TableRow>
         </TableHeader>
@@ -89,7 +94,7 @@ export function CategoriesTable() {
           {loading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <TableRow key={i}>
-                {Array.from({ length: 6 }).map((__, j) => (
+                {Array.from({ length: colSpan }).map((__, j) => (
                   <TableCell key={j}>
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
@@ -98,7 +103,7 @@ export function CategoriesTable() {
             ))
           ) : categories.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={colSpan} className="h-24 text-center text-sm text-muted-foreground">
                 No categories found.
               </TableCell>
             </TableRow>
@@ -106,7 +111,7 @@ export function CategoriesTable() {
             categories.map((cat) => (
               <TableRow
                 key={cat.id}
-                className={cn(!cat.isActive && 'opacity-50')}
+                className={cn(isAdmin && cat.isActive === false && 'opacity-50')}
               >
                 <TableCell className="font-medium text-foreground">{cat.name}</TableCell>
                 <TableCell className="font-mono text-xs text-muted-foreground">{cat.slug}</TableCell>
@@ -116,17 +121,19 @@ export function CategoriesTable() {
                 <TableCell className="text-sm text-muted-foreground">
                   {parentName(cat, index)}
                 </TableCell>
-                <TableCell>
-                  {cat.isActive ? (
-                    <Badge variant="outline" className="border-primary text-primary text-xs">
-                      Active
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="border-muted-foreground text-muted-foreground text-xs">
-                      Inactive
-                    </Badge>
-                  )}
-                </TableCell>
+                {isAdmin && (
+                  <TableCell>
+                    {cat.isActive ? (
+                      <Badge variant="outline" className="border-primary text-primary text-xs">
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-muted-foreground text-muted-foreground text-xs">
+                        Inactive
+                      </Badge>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell className="text-sm text-muted-foreground">
                   {formatDate(cat.createdAt)}
                 </TableCell>

@@ -7,7 +7,12 @@ const COOKIE_NAME = 'platform-auth-token'
 const COOKIE_MAX_AGE = 60 * 60 * 15 // 15 minutes — matches backend token TTL
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json()) as { token?: unknown }
+  let body: { token?: unknown }
+  try {
+    body = (await request.json()) as { token?: unknown }
+  } catch {
+    return NextResponse.json({ message: 'Invalid request body.' }, { status: 400 })
+  }
 
   let res: Response
   try {

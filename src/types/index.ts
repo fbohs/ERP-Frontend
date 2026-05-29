@@ -125,6 +125,18 @@ export interface CreateProductBody {
   readonly compareAtPrice?: string | null
 }
 
+export interface UpdateProductBody {
+  readonly name?: string
+  readonly sku?: string
+  readonly description?: string | null
+  readonly type?: 'GOODS' | 'SERVICE'
+  readonly tags?: readonly string[]
+  readonly categoryId?: string
+  readonly uomCode?: string
+  readonly status?: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
+  readonly hsnCode?: string | null
+}
+
 export interface PresignResponse {
   readonly s3Key: string
   readonly uploadUrl: string

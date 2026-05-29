@@ -26,3 +26,25 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   const data = await res.json()
   return NextResponse.json(data, { status: res.status })
 }
+
+export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const token = request.cookies.get(COOKIE_NAME)?.value
+  if (!token) return unauthorized()
+
+  const { id } = await params
+  const idempotencyKey = request.headers.get('Idempotency-Key') ?? ''
+  const body = await request.json()
+
+  const res = await fetch(`${BACKEND}/products/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey,
+    },
+    body: JSON.stringify(body),
+  })
+
+  const data = await res.json()
+  return NextResponse.json(data, { status: res.status })
+}

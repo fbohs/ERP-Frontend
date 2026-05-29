@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, ShieldOff } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -216,10 +217,14 @@ function ProductRow({
   categoryName: string
   isAdmin: boolean
 }) {
+  const router = useRouter()
   const isSuspended = isAdmin && product.isSuspendedByOperator === true
 
   return (
-    <TableRow className={cn(isSuspended && 'opacity-60')}>
+    <TableRow
+      className={cn('cursor-pointer hover:bg-muted/30', isSuspended && 'opacity-60')}
+      onClick={() => router.push(`/products/${product.id}`)}
+    >
       <TableCell className="font-medium text-foreground">{product.name}</TableCell>
       <TableCell className="font-mono text-xs text-muted-foreground">{product.sku}</TableCell>
       <TableCell className="text-sm text-muted-foreground">{categoryName}</TableCell>

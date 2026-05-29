@@ -63,16 +63,100 @@ export interface PlatformAdmin {
   readonly isActive: boolean
 }
 
-export interface Product {
+export interface VariantView {
   readonly id: string
+  readonly sku: string
+  readonly listPrice: string
+  readonly compareAtPrice: string | null
+  readonly standardCost: string | null
+  readonly isActive: boolean
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface MediaView {
+  readonly s3Key: string
+  readonly url: string
+  readonly altText: string | null
+  readonly isPrimary: boolean
+  readonly sortOrder: number
+}
+
+export interface ProductListView {
+  readonly id: string
+  readonly sku: string
+  readonly name: string
+  readonly slug: string
+  readonly description: string | null
+  readonly type: 'GOODS' | 'SERVICE'
+  readonly status: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
+  readonly categoryId: string
+  readonly uomCode: string
+  readonly tags: readonly string[]
+  readonly hsnCode: string | null
+  readonly isPublished: boolean
+  readonly isSuspendedByOperator?: boolean
+  readonly verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED'
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface ProductView extends ProductListView {
+  readonly variants: readonly VariantView[]
+  readonly media: readonly MediaView[]
+}
+
+export interface ListProductsResponse {
+  readonly products: readonly ProductListView[]
+}
+
+export interface CreateProductBody {
   readonly name: string
   readonly sku: string
-  readonly price: number
-  readonly stock: number
-  readonly category: string
-  readonly status: 'active' | 'draft' | 'archived'
-  readonly imageUrl?: string
-  readonly createdAt: string
+  readonly categoryId: string
+  readonly uomCode: string
+  readonly listPrice: string
+  readonly slug?: string
+  readonly description?: string | null
+  readonly type?: 'GOODS' | 'SERVICE'
+  readonly tags?: readonly string[]
+  readonly hsnCode?: string | null
+  readonly variantSku?: string
+  readonly compareAtPrice?: string | null
+}
+
+export interface PresignResponse {
+  readonly s3Key: string
+  readonly uploadUrl: string
+  readonly expiresAt: string
+}
+
+export interface ConfirmImagesBody {
+  readonly images: {
+    readonly primary?: { readonly s3Key: string; readonly altText?: string | null }
+    readonly others?: ReadonlyArray<{ readonly s3Key: string; readonly altText?: string | null }>
+  }
+}
+
+export type ProductErrorCode =
+  | 'PRODUCT_SKU_EXISTS'
+  | 'PRODUCT_SLUG_EXISTS'
+  | 'VARIANT_SKU_EXISTS'
+  | 'INVALID_CATEGORY'
+  | 'INVALID_UOM'
+  | 'VALIDATION_ERROR'
+  | 'PRODUCT_NOT_FOUND'
+  | 'PRODUCT_IMAGE_PRIMARY_REQUIRED'
+  | 'PRODUCT_IMAGE_KEY_MISMATCH'
+  | 'PRODUCT_IMAGE_NOT_UPLOADED'
+  | 'PRODUCT_IMAGE_TOO_LARGE'
+  | 'PRODUCT_IMAGE_NOT_FOUND'
+  | 'PRODUCT_IMAGE_REORDER_MISMATCH'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+
+export interface ProductApiError {
+  readonly error: { readonly code: ProductErrorCode; readonly message: string }
 }
 
 export interface Order {

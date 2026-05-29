@@ -2,6 +2,12 @@ export function formatCurrency(amount: number, currency = 'USD'): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
 }
 
+export function formatPrice(decimalString: string): string {
+  const n = parseFloat(decimalString)
+  if (isNaN(n)) return decimalString
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(n)
+}
+
 export function formatDate(dateString: string): string {
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',

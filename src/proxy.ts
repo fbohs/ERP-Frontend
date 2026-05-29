@@ -9,6 +9,7 @@ const PLATFORM_PUBLIC_PATHS = ['/platform/login', '/platform/verify']
 const ROUTE_ROLES: ReadonlyArray<{ prefix: string; roles: readonly string[] }> = [
   { prefix: '/users',      roles: ['ADMIN'] },
   { prefix: '/categories', roles: ['ADMIN'] },
+  { prefix: '/products',   roles: ['ADMIN'] },
   { prefix: '/orders',     roles: ['ADMIN', 'SALES_MANAGER', 'WAREHOUSE_OPERATOR', 'PURCHASING_MANAGER'] },
   { prefix: '/customers',  roles: ['ADMIN', 'SALES_MANAGER'] },
   { prefix: '/reports',    roles: ['ADMIN', 'SALES_MANAGER', 'INVENTORY_MANAGER', 'PURCHASING_MANAGER', 'PRODUCT_VERIFIER', 'CONTENT_MANAGER', 'REPORT_VIEWER'] },

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -55,7 +56,6 @@ export function CreateUserDialog() {
   const createUser = useUsersStore((s) => s.createUser)
   const [open, setOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState<string | null>(null)
   const [errors, setErrors] = useState<FieldErrors>({})
   const idempotencyKeyRef = useRef(crypto.randomUUID())
 
@@ -82,7 +82,7 @@ export function CreateUserDialog() {
     setEmail(''); setName(''); setRole('')
     setBusinessName(''); setRegistrationNumber(''); setAddress(''); setPhoneNumber(''); setWebsite('')
     setBadgeId(''); setCertificationLevel(''); setSpecializations([]); setSpecInput(''); setCertifiedUntil('')
-    setErrors({}); setSuccess(null)
+    setErrors({})
     idempotencyKeyRef.current = crypto.randomUUID()
   }
 
@@ -164,7 +164,7 @@ export function CreateUserDialog() {
 
     try {
       const created = await createUser(body, idempotencyKeyRef.current)
-      setSuccess(`Account created. ${created.name} will receive an email with their temporary password.`)
+      toast.success(`Account created. ${created.name} will receive an email with their temporary password.`)
       setOpen(false)
       reset()
     } catch (err) {

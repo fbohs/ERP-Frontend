@@ -29,7 +29,7 @@ function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground">{value}</p>
+      <div className="text-sm text-foreground">{value}</div>
     </div>
   )
 }

@@ -192,6 +192,54 @@ export interface UserApiError {
   readonly error: { readonly code: UserErrorCode; readonly message: string }
 }
 
+// ── Categories ────────────────────────────────────────────────────────────────
+
+export interface Category {
+  readonly id: string
+  readonly name: string
+  readonly slug: string
+  readonly description: string | null
+  readonly parentId: string | null
+  readonly isActive: boolean
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface ListCategoriesResponse {
+  readonly categories: readonly Category[]
+}
+
+export interface CreateCategoryBody {
+  readonly name: string
+  readonly slug: string
+  readonly description: string | null
+  readonly parentId: string | null
+}
+
+export interface UpdateCategoryBody {
+  name?: string
+  slug?: string
+  description?: string | null
+  parentId?: string | null
+  isActive?: boolean
+}
+
+export type CategoryErrorCode =
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'CATEGORY_NOT_FOUND'
+  | 'CATEGORY_SLUG_EXISTS'
+  | 'CIRCULAR_CATEGORY_REFERENCE'
+  | 'CATEGORY_HAS_PRODUCTS'
+  | 'VALIDATION_ERROR'
+  | 'INTERNAL_ERROR'
+
+export interface CategoryApiError {
+  readonly error: { readonly code: CategoryErrorCode; readonly message: string }
+}
+
+// ── Role labels ───────────────────────────────────────────────────────────────
+
 export const ROLE_LABELS: Readonly<Record<UserRole, string>> = {
   ADMIN: 'Admin',
   MERCHANT: 'Merchant',
